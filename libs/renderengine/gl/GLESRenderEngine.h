@@ -47,6 +47,7 @@ namespace gl {
 
 class GLImage;
 class BlurFilter;
+class CrtFilter;
 
 class GLESRenderEngine : public impl::RenderEngine {
 public:
@@ -258,6 +259,7 @@ private:
 
     // Blur effect processor, only instantiated when a layer requests it.
     BlurFilter* mBlurFilter = nullptr;
+    CrtFilter* mCrtFilter = nullptr;
 
     class FlushTracer {
     public:
@@ -284,6 +286,7 @@ private:
     friend class ImageManager;
     friend class GLFramebuffer;
     friend class BlurFilter;
+    friend class CrtFilter;
     friend class GenericProgram;
     std::unique_ptr<FlushTracer> mFlushTracer;
     std::unique_ptr<ImageManager> mImageManager = std::make_unique<ImageManager>(this);

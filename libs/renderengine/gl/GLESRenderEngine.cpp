@@ -50,6 +50,7 @@
 #include "Program.h"
 #include "ProgramCache.h"
 #include "filters/BlurFilter.h"
+#include "filters/CrtFilter.h"
 
 extern "C" EGLAPI const char* eglQueryStringImplementationANDROID(EGLDisplay dpy, EGLint name);
 
@@ -411,6 +412,9 @@ GLESRenderEngine::GLESRenderEngine(const RenderEngineCreationArgs& args, EGLDisp
         mBlurFilter = new BlurFilter(*this);
         checkErrors("BlurFilter creation");
     }
+
+    mCrtFilter = new CrtFilter(*this);
+    checkErrors("CrtFilter creation");
 
     mImageManager = std::make_unique<ImageManager>(this);
     mImageManager->initThread();
@@ -1071,12 +1075,22 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
     const auto blurLayersSize = blurLayers.size();
 
     if (blurLayersSize == 0) {
-        fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer, useFramebufferCache);
-        if (fbo->getStatus() != NO_ERROR) {
-            ALOGE("Failed to bind framebuffer! Aborting GPU composition for buffer (%p).",
-                  buffer->handle);
-            checkErrors();
-            return fbo->getStatus();
+        if (mCrtFilter != nullptr) {
+            auto status = mCrtFilter->setAsDrawTarget(display);
+            if (status != NO_ERROR) {
+                ALOGE("Failed to prepare crt filter! Aborting GPU composition for buffer (%p).",
+                    buffer->handle);
+                checkErrors();
+                return status;
+            }
+        } else {
+            fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer, useFramebufferCache);
+            if (fbo->getStatus() != NO_ERROR) {
+                ALOGE("Failed to bind framebuffer! Aborting GPU composition for buffer (%p).",
+                    buffer->handle);
+                checkErrors();
+                return fbo->getStatus();
+            }
         }
         setViewportAndProjection(display.physicalDisplay, display.clip);
     } else {
@@ -1128,9 +1142,13 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
 
             if (blurLayers.size() == 0) {
                 // Done blurring, time to bind the native FBO and render our blur onto it.
-                fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer,
-                                                                      useFramebufferCache);
-                status = fbo->getStatus();
+                if (mCrtFilter != nullptr) {
+                    status = mCrtFilter->setAsDrawTarget(display);
+                } else {
+                    fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer,
+                                                                          useFramebufferCache);
+                    status = fbo->getStatus();
+                }
                 setViewportAndProjection(display.physicalDisplay, display.clip);
             } else {
                 // There's still something else to blur, so let's keep rendering to our FBO
@@ -1226,6 +1244,23 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
             disableBlending();
             setSourceY410BT2020(false);
             disableTexturing();
+        }
+    }
+
+    if (mCrtFilter != nullptr) {
+        // Render the CRT effect to the display buffer.
+        fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer, useFramebufferCache);
+        auto status = fbo->getStatus();
+
+        setViewportAndProjection(display.physicalDisplay, display.clip);
+        if (status == NO_ERROR) {
+            status = mCrtFilter->render();
+        }
+        if (status != NO_ERROR) {
+            ALOGE("Failed to render crt effect! Aborting GPU composition for buffer (%p).",
+                  buffer->handle);
+            checkErrors("Can't render crt filter");
+            return status;
         }
     }
 
@@ -1542,6 +1577,10 @@ void GLESRenderEngine::dump(std::string& result) {
         for (const auto& [id, unused] : mFramebufferImageCache) {
             StringAppendF(&result, "0x%" PRIx64 "\n", id);
         }
+    }
+    StringAppendF(&result, "RenderEngine CrtFilter: %s\n", mCrtFilter ? "enabled" : "disabled");
+    if (mCrtFilter) {
+        mCrtFilter->dump(result);
     }
 }
 
