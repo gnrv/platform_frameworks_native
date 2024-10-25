@@ -35,5 +35,7 @@ cc_test {
         "libsync",
         "libui",
         "libutils",
+        "libz",
+        "libpng",
     ],
 }
