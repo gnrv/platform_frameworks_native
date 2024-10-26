@@ -44,6 +44,7 @@ filegroup {
         "Mesh.cpp",
         "RenderEngine.cpp",
         "Texture.cpp",
+        "Plugin.cpp"
     ],
 }
 

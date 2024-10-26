@@ -308,6 +308,10 @@ void Output::present(const compositionengine::CompositionRefreshArgs& refreshArg
     ATRACE_CALL();
     ALOGV(__FUNCTION__);
 
+    if (refreshArgs.bypassCompositionRequestCache) {
+        dirtyEntireOutput();
+    }
+
     updateColorProfile(refreshArgs);
     updateAndWriteCompositionState(refreshArgs);
     setColorTransform(refreshArgs);
@@ -891,6 +895,9 @@ std::optional<base::unique_fd> Output::composeSurfaces(
     // Check if the client composition requests were rendered into the provided graphic buffer. If
     // so, we can reuse the buffer and avoid client composition.
     if (mClientCompositionRequestCache) {
+        if (refreshArgs.bypassCompositionRequestCache) {
+            mClientCompositionRequestCache->remove(buf->getId());
+        }
         if (mClientCompositionRequestCache->exists(buf->getId(), clientCompositionDisplay,
                                                    clientCompositionLayers)) {
             outputCompositionState.reusedClientComposition = true;

@@ -62,6 +62,7 @@
 #include <log/log.h>
 #include <private/android_filesystem_config.h>
 #include <private/gui/SyncFeatures.h>
+#include <renderengine/Plugin.h>
 #include <renderengine/RenderEngine.h>
 #include <statslog.h>
 #include <sys/types.h>
@@ -710,6 +711,22 @@ void SurfaceFlinger::init() {
                         : renderengine::RenderEngine::ContextPriority::MEDIUM)
                 .build()));
     mCompositionEngine->setTimeStats(mTimeStats);
+
+    // Register the filter callback
+    sp<renderengine::Plugin> plugin = renderengine::Plugin::createPlugin("libcrtfilter.so");
+    auto filter_register_callback = (void (*)(void (*)()))plugin->symbol("filter_register_callback");
+    if (filter_register_callback) {
+        static wp<SurfaceFlinger> weak_flinger(this);
+        filter_register_callback([] {
+            auto flinger = weak_flinger.promote();
+            if (flinger) {
+                flinger->mBypassCompositionRequestCache = true;
+                //flinger->signalRefresh();
+                Mutex::Autolock _l(flinger->mStateLock);
+                flinger->setTransactionFlags(eTransactionNeeded);
+            }
+        });
+    }
 
     LOG_ALWAYS_FATAL_IF(mVrFlingerRequestsDisplay,
             "Starting with vr flinger active is not currently supported.");
@@ -2085,6 +2102,7 @@ void SurfaceFlinger::onMessageRefresh() {
     }
 
     refreshArgs.repaintEverything = mRepaintEverything.exchange(false);
+    refreshArgs.bypassCompositionRequestCache = mBypassCompositionRequestCache.exchange(false);
     refreshArgs.outputColorSetting = useColorManagement
             ? mDisplayColorSetting
             : compositionengine::OutputColorSetting::kUnmanaged;

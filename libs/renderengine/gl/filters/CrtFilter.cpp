@@ -47,32 +47,12 @@ CrtFilter::CrtFilter(GLESRenderEngine& engine)
       : mEngine(engine),
         mCompositionFbo(engine),
         mProgram(engine),
-        mContextLost(sInitialized) {
-    static void* handle = dlopen("libcrtfilter.so", RTLD_LOCAL | RTLD_NOW);
-
-    if (handle) {
-        ALOGI("Successfully loaded libcrtfilter.so:");
-        const char* msg;
-        do {
-            std::string message((msg = dlerror()) ? msg : "no error");
-            ALOGI("dlerror: %s", message.c_str());
-        } while (msg);
-
-        // dlsym the functions from "filter.h"
-        filter_init = (void (*)(const char *, struct gl_functions*))dlsym(handle, "filter_init");
-        filter_gl_context_lost = (void (*)())dlsym(handle, "filter_gl_context_lost");
-        filter_gl_context_restored = (void (*)())dlsym(handle, "filter_gl_context_restored");
-        filter_draw = (void (*)(int, int, int))dlsym(handle, "filter_draw");
-        filter_register_callback = (void (*)(void (*)()))dlsym(handle, "filter_register_callback");
-        //dlclose(handle);
-    } else {
-        ALOGE("Failed to load libcrtfilter.so:");
-        const char* msg;
-        do {
-            std::string message((msg = dlerror()) ? msg : "no error");
-            ALOGE("dlerror: %s", message.c_str());
-        } while (msg);
-    }
+        mContextLost(sInitialized),
+        mPlugin(Plugin::createPlugin("libcrtfilter.so")) {
+    filter_init = (void (*)(const char *, struct gl_functions*))mPlugin->symbol("filter_init");
+    filter_gl_context_lost = (void (*)())mPlugin->symbol("filter_gl_context_lost");
+    filter_gl_context_restored = (void (*)())mPlugin->symbol("filter_gl_context_restored");
+    filter_draw = (void (*)(int, int, int))mPlugin->symbol("filter_draw");
 
     mProgram.compile(getVertexShader(), getFragmentShader());
     mBPosLoc = mProgram.getAttributeLocation("aPosition");
@@ -224,7 +204,7 @@ status_t CrtFilter::render() {
 }
 
 void CrtFilter::dump(std::string& result) {
-    StringAppendF(&result, "Loaded symbols init: %p, register_callback: %p, draw: %p\n", filter_init, filter_register_callback, filter_draw);
+    StringAppendF(&result, "Loaded symbols init: %p, draw: %p\n", filter_init, filter_draw);
 }
 
 void CrtFilter::drawMesh(GLuint uv, GLuint position) {

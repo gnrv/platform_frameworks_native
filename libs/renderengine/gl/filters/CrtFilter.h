@@ -22,6 +22,8 @@
 #include "../GLVertexBuffer.h"
 #include "GenericProgram.h"
 
+#include <renderengine/Plugin.h>
+
 using namespace std;
 
 struct gl_functions {
@@ -101,7 +103,6 @@ private:
     void (*filter_gl_context_lost)() = nullptr;
     void (*filter_gl_context_restored)() = nullptr;
     void (*filter_draw)(int tex, int width, int height) = nullptr;
-    void (*filter_register_callback)(void (*callback)()) = nullptr;
 
     // VBO containing vertex and uv data of a fullscreen triangle.
     GLVertexBuffer mMeshBuffer;
@@ -114,6 +115,7 @@ private:
     string getFragmentShader() const;
 
     bool mContextLost;
+    sp<Plugin> mPlugin;
 };
 
 } // namespace gl

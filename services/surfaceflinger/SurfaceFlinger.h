@@ -1025,6 +1025,7 @@ private:
     bool mLayersAdded = false;
 
     std::atomic<bool> mRepaintEverything = false;
+    std::atomic<bool> mBypassCompositionRequestCache = false;
 
     // constant members (no synchronization needed for access)
     const nsecs_t mBootTime = systemTime();
