@@ -116,6 +116,8 @@ struct OutputCompositionState {
     // Current target dataspace
     ui::Dataspace targetDataspace{ui::Dataspace::UNKNOWN};
 
+    bool applyFilter{true};
+
     // Debugging
     void dump(std::string& result) const;
 };

@@ -49,10 +49,10 @@ CrtFilter::CrtFilter(GLESRenderEngine& engine)
         mProgram(engine),
         mContextLost(sInitialized),
         mPlugin(Plugin::createPlugin("libcrtfilter.so")) {
-    filter_init = (void (*)(const char *, struct gl_functions*))mPlugin->symbol("filter_init");
+    filter_init = (void (*)(const char *))mPlugin->symbol("filter_init");
     filter_gl_context_lost = (void (*)())mPlugin->symbol("filter_gl_context_lost");
     filter_gl_context_restored = (void (*)())mPlugin->symbol("filter_gl_context_restored");
-    filter_draw = (void (*)(int, int, int))mPlugin->symbol("filter_draw");
+    filter_draw = (void (*)(int))mPlugin->symbol("filter_draw");
 
     mProgram.compile(getVertexShader(), getFragmentShader());
     mBPosLoc = mProgram.getAttributeLocation("aPosition");
@@ -122,52 +122,8 @@ void dumpState()
 status_t CrtFilter::render() {
     if (!sInitialized) {
         if (filter_init) {
-            static gl_functions gl = {
-    glCreateProgram,
-    glCreateShader,
-    glShaderSource,
-    glCompileShader,
-    glAttachShader,
-    glLinkProgram,
-    glGetShaderiv,
-    glGetProgramiv,
-    glGetShaderInfoLog,
-    glGetProgramInfoLog,
-    glGetUniformLocation,
-    glGetAttribLocation,
-    glDeleteShader,
-    glDeleteProgram,
-    glUseProgram,
-    glGenBuffers,
-    glDeleteBuffers,
-    glBindBuffer,
-    glBufferData,
-    glGetError,
-    glUniform1fv,
-    glUniform1f,
-    glUniform1i,
-    glGetIntegerv,
-    glViewport,
-    glClearColor,
-    glClear,
-    glBindFramebuffer,
-    glGenFramebuffers,
-    glGenTextures,
-    glBindTexture,
-    glActiveTexture,
-    glVertexAttribPointer,
-    glEnableVertexAttribArray,
-    glDrawArrays,
-    glDisableVertexAttribArray,
-    glTexImage2D,
-    glTexParameteri,
-    glFramebufferTexture2D,
-    glCheckFramebufferStatus,
-    glDeleteFramebuffers,
-    glDeleteTextures
-            };
             ALOGI("Initializing CRT filter");
-            filter_init(nullptr/*"/data/local/tmp/crtfilter.log"*/, &gl);
+            filter_init("/data/local/tmp/crtfilter.log");
             ALOGI("Initialized CRT filter");
         }
         mEngine.checkErrors("Initializing CRT filter");
@@ -187,7 +143,7 @@ status_t CrtFilter::render() {
 
     glDisableVertexAttribArray(0);
     glUseProgram(0);
-    filter_draw(mCompositionFbo.getTextureName(), mDisplayWidth, mDisplayHeight);
+    filter_draw(mCompositionFbo.getTextureName());
     // Use RenderEngine objects to blit
     // mProgram.useProgram();
     // glActiveTexture(GL_TEXTURE0);

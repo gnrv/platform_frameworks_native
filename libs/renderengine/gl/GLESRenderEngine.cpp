@@ -1075,7 +1075,7 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
     const auto blurLayersSize = blurLayers.size();
 
     if (blurLayersSize == 0) {
-        if (mCrtFilter != nullptr) {
+        if (display.applyFilter && mCrtFilter != nullptr) {
             auto status = mCrtFilter->setAsDrawTarget(display);
             if (status != NO_ERROR) {
                 ALOGE("Failed to prepare crt filter! Aborting GPU composition for buffer (%p).",
@@ -1142,7 +1142,7 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
 
             if (blurLayers.size() == 0) {
                 // Done blurring, time to bind the native FBO and render our blur onto it.
-                if (mCrtFilter != nullptr) {
+                if (display.applyFilter && mCrtFilter != nullptr) {
                     status = mCrtFilter->setAsDrawTarget(display);
                 } else {
                     fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer,
@@ -1247,7 +1247,7 @@ status_t GLESRenderEngine::drawLayers(const DisplaySettings& display,
         }
     }
 
-    if (mCrtFilter != nullptr) {
+    if (display.applyFilter && mCrtFilter != nullptr) {
         // Render the CRT effect to the display buffer.
         fbo = std::make_unique<BindNativeBufferAsFramebuffer>(*this, buffer, useFramebufferCache);
         auto status = fbo->getStatus();

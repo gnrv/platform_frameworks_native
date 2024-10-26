@@ -251,6 +251,8 @@ public:
     // Latches the front-end layer state for each output layer
     virtual void updateLayerStateFromFE(const CompositionRefreshArgs&) const = 0;
 
+    virtual void setApplyFilter(bool applyFilter) = 0;
+
 protected:
     virtual void setDisplayColorProfile(std::unique_ptr<DisplayColorProfile>) = 0;
     virtual void setRenderSurface(std::unique_ptr<RenderSurface>) = 0;

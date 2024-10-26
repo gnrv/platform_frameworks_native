@@ -60,6 +60,9 @@ struct DisplaySettings {
     // capture of a device in landscape while the buffer is in portrait
     // orientation.
     uint32_t orientation = ui::Transform::ROT_0;
+
+    // Apply full-screen filter effect on this display
+    bool applyFilter = true;
 };
 
 static inline bool operator==(const DisplaySettings& lhs, const DisplaySettings& rhs) {

@@ -52,6 +52,7 @@ void OutputCompositionState::dump(std::string& out) const {
     dumpVal(out, "dataspace", toString(dataspace), dataspace);
     dumpVal(out, "colorTransformMatrix", colorTransformMatrix);
     dumpVal(out, "target dataspace", toString(targetDataspace), targetDataspace);
+    dumpVal(out, "applyFilter", applyFilter);
 
     out.append("\n");
 }

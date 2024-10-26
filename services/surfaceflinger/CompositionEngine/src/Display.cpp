@@ -56,6 +56,9 @@ void Display::setConfiguration(const compositionengine::DisplayCreationArgs& arg
 
     editState().isSecure = args.isSecure;
 
+    // By default, only physical displays use the filter effect.
+    editState().applyFilter = !mIsVirtual;
+
     setLayerStackFilter(args.layerStackId,
                         args.physical ? args.physical->type == DisplayConnectionType::Internal
                                       : false);

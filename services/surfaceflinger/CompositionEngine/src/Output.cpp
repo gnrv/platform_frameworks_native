@@ -871,6 +871,7 @@ std::optional<base::unique_fd> Output::composeSurfaces(
     clientCompositionDisplay.physicalDisplay = outputState.destinationClip;
     clientCompositionDisplay.clip = outputState.sourceClip;
     clientCompositionDisplay.orientation = outputState.orientation;
+    clientCompositionDisplay.applyFilter = outputState.applyFilter;
     clientCompositionDisplay.outputDataspace = mDisplayColorProfile->hasWideColorGamut()
             ? outputState.dataspace
             : ui::Dataspace::UNKNOWN;
@@ -1123,6 +1124,10 @@ compositionengine::Output::FrameFences Output::presentAndGetFrameFences() {
         result.clientTargetAcquireFence = mRenderSurface->getClientTargetAcquireFence();
     }
     return result;
+}
+
+void Output::setApplyFilter(bool applyFilter) {
+    editState().applyFilter = applyFilter;
 }
 
 } // namespace impl

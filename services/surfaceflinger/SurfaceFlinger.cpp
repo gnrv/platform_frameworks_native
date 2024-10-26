@@ -5217,9 +5217,24 @@ status_t SurfaceFlinger::onTransact(uint32_t code, const Parcel& data, Parcel* r
                 repaintEverything();
                 return NO_ERROR;
             }
-            // Deprecate, use 1030 to check whether the device is color managed.
             case 1024: {
-                return NAME_NOT_FOUND;
+                // Enable/disable filter for all displays
+                // By default, only physical displays use the filter effect.
+                {
+                    Mutex::Autolock lock(mStateLock);
+                    n = data.readInt32();
+                    for (const auto& [token, displayDevice] : mDisplays) {
+                        auto compositionDisplay = displayDevice->getCompositionDisplay();
+                        if (n == 2) {
+                            // Reset to default
+                            compositionDisplay->setApplyFilter(!compositionDisplay->isVirtual());
+                        } else {
+                            compositionDisplay->setApplyFilter(n);
+                        }
+                    }
+                }
+                repaintEverything();
+                return NO_ERROR;
             }
             case 1025: { // Set layer tracing
                 n = data.readInt32();

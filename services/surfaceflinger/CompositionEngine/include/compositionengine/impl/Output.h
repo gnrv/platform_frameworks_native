@@ -77,6 +77,7 @@ public:
     void setReleasedLayers(const compositionengine::CompositionRefreshArgs&) override;
 
     void updateLayerStateFromFE(const CompositionRefreshArgs&) const override;
+    void setApplyFilter(bool applyFilter) override;
     void updateAndWriteCompositionState(const compositionengine::CompositionRefreshArgs&) override;
     void updateColorProfile(const compositionengine::CompositionRefreshArgs&) override;
     void beginFrame() override;
